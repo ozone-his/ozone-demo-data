@@ -52,6 +52,9 @@
   <properties>
     <java.version>17</java.version>
     <lombok.version>1.18.30</lombok.version>
+    <keycloak.version>22.0.2</keycloak.version>
+
+    <!-- Code Formatting -->
     <spotless.version>2.30.0</spotless.version>
     <palantirJavaFormat.version>1.1.0</palantirJavaFormat.version>
   </properties>
@@ -61,7 +64,20 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-json</artifactId>
+    </dependency>
 
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-admin-client</artifactId>
+      <version>${keycloak.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
