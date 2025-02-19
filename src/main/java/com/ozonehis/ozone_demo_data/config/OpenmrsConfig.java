@@ -42,9 +42,6 @@ public class OpenmrsConfig {
     @Value("${openmrs.oauth.clientSecret}")
     private String clientSecret;
 
-    @Value("${openmrs.oauth.scope}")
-    private String scope;
-
     // Health check configuration
     @Value("${openmrs.healthcheck.maxRetries}")
     private int maxRetries;

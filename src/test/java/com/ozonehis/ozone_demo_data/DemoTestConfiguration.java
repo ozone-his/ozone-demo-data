@@ -7,14 +7,8 @@
  */
 package com.ozonehis.ozone_demo_data;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import com.ozonehis.ozone_demo_data.config.BeanConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 
-@SpringBootTest
-@ContextConfiguration(classes = DemoTestConfiguration.class)
-class OzoneDemoDataApplicationTests {
-
-    @Test
-    void contextLoads() {}
-}
+@ContextConfiguration(classes = {BeanConfiguration.class})
+public class DemoTestConfiguration {}
