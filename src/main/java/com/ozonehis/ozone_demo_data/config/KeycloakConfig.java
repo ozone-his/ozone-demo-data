@@ -13,7 +13,7 @@ import lombok.Setter;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -24,20 +24,30 @@ import org.springframework.context.annotation.Configuration;
 @Setter
 @Getter
 @Configuration
-@ConfigurationProperties(prefix = "keycloak.demo.data")
 public class KeycloakConfig {
 
     @NotBlank
+    @Value("${keycloak.serverUrl}")
     private String serverUrl;
 
     @NotBlank
+    @Value("${keycloak.demo.data.realm}")
     private String realm;
 
     @NotBlank
+    @Value("${keycloak.demo.data.clientId}")
     private String clientId;
 
     @NotBlank
+    @Value("${keycloak.demo.data.clientSecret}")
     private String clientSecret;
+
+    // Health check configuration
+    @Value("${keycloak.healthcheck.maxRetries}")
+    private int maxRetries;
+
+    @Value("${keycloak.healthcheck.retryDelayMillis}")
+    private long retryDelayMillis;
 
     @Bean
     public Keycloak keycloak() {

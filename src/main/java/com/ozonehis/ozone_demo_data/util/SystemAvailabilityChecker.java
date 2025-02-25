@@ -9,6 +9,7 @@ package com.ozonehis.ozone_demo_data.util;
 
 import static java.lang.Thread.sleep;
 
+import com.ozonehis.ozone_demo_data.config.KeycloakConfig;
 import com.ozonehis.ozone_demo_data.config.OpenmrsConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class SystemAvailabilityChecker {
 
     @Autowired
     private OpenmrsConfig openmrsConfig;
+
+    @Autowired
+    private KeycloakConfig keycloakConfig;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -69,5 +73,50 @@ public class SystemAvailabilityChecker {
             attempts++;
         }
         return isOpenMRSAvailable();
+    }
+
+    /**
+     * This method checks if Keycloak server is available or not. It sends a GET request to Keycloak health endpoint.
+     *
+     * @return true if Keycloak server is available, false otherwise.
+     */
+    public boolean isKeycloakAvailable() {
+        try {
+            HttpStatusCode status = restTemplate
+                    .getForEntity(keycloakConfig.getServerUrl() + "/health/ready", String.class)
+                    .getStatusCode();
+            if (status.is2xxSuccessful()) {
+                log.info("Keycloak server is available");
+                return true;
+            } else {
+                log.warn("Keycloak server is not available. Status code: {}", status);
+                return false;
+            }
+        } catch (Exception e) {
+            log.warn("Keycloak Server not ready: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * This method waits for Keycloak server to be available. It retries 5 times with a delay of 5 seconds between each
+     * retry.
+     *
+     * @return true if Keycloak server is available, false otherwise.
+     */
+    public boolean waitForKeycloakAvailability() {
+        int attempts = 0;
+        while (!isKeycloakAvailable() && attempts < keycloakConfig.getMaxRetries()) {
+            try {
+                sleep(keycloakConfig.getRetryDelayMillis());
+            } catch (InterruptedException e) {
+                log.error("Error while waiting for Keycloak server to be available", e);
+                Thread.currentThread().interrupt();
+                return false;
+            }
+            log.info("Waiting for Keycloak server to be available...");
+            attempts++;
+        }
+        return isKeycloakAvailable();
     }
 }

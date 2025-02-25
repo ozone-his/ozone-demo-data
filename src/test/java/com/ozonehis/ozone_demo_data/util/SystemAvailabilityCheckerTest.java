@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+import com.ozonehis.ozone_demo_data.config.KeycloakConfig;
 import com.ozonehis.ozone_demo_data.config.OpenmrsConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,9 @@ class SystemAvailabilityCheckerTest {
     private OpenmrsConfig openmrsConfig;
 
     @Mock
+    private KeycloakConfig keycloakConfig;
+
+    @Mock
     private RestTemplate restTemplate;
 
     @InjectMocks
@@ -37,14 +41,18 @@ class SystemAvailabilityCheckerTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(openmrsConfig.getUrl()).thenReturn("http://test-openmrs");
+        lenient().when(openmrsConfig.getUrl()).thenReturn("http://openmrs");
         lenient().when(openmrsConfig.getMaxRetries()).thenReturn(5);
         lenient().when(openmrsConfig.getRetryDelayMillis()).thenReturn(1000L);
+
+        lenient().when(keycloakConfig.getServerUrl()).thenReturn("http://keycloak");
+        lenient().when(keycloakConfig.getMaxRetries()).thenReturn(5);
+        lenient().when(keycloakConfig.getRetryDelayMillis()).thenReturn(1000L);
     }
 
     @Test
-    void shouldReturnTrueWhenSystemIsAvailable() {
-        when(restTemplate.getForEntity("http://test-openmrs/health", String.class))
+    void shouldReturnTrueWhenOpenMRSSystemIsAvailable() {
+        when(restTemplate.getForEntity("http://openmrs/health", String.class))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         boolean result = systemAvailabilityChecker.isOpenMRSAvailable();
@@ -53,9 +61,9 @@ class SystemAvailabilityCheckerTest {
     }
 
     @Test
-    void shouldReturnFalseWhenSystemIsNotAvailable() {
-        when(restTemplate.getForEntity("http://test-openmrs/health", String.class))
-                .thenThrow(new RuntimeException("Connection failed"));
+    void shouldReturnFalseWhenOpenMRSIsNotAvailable() {
+        when(restTemplate.getForEntity("http://openmrs/health", String.class))
+                .thenReturn(new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE));
 
         boolean result = systemAvailabilityChecker.isOpenMRSAvailable();
 
@@ -64,7 +72,7 @@ class SystemAvailabilityCheckerTest {
 
     @Test
     void shouldWaitForOpenMRSAvailability() {
-        when(restTemplate.getForEntity("http://test-openmrs/health", String.class))
+        when(restTemplate.getForEntity("http://openmrs/health", String.class))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         boolean result = systemAvailabilityChecker.waitForOpenMRSAvailability();
@@ -73,11 +81,51 @@ class SystemAvailabilityCheckerTest {
     }
 
     @Test
-    void shouldReturnFalseWhenMaxRetriesExceeded() {
-        when(restTemplate.getForEntity("http://test-openmrs/health", String.class))
+    void shouldReturnFalseWhenOpenMRSMaxRetriesExceeded() {
+        when(restTemplate.getForEntity("http://openmrs/health", String.class))
                 .thenThrow(new RuntimeException("Connection failed"));
 
         boolean result = systemAvailabilityChecker.waitForOpenMRSAvailability();
+
+        assertFalse(result);
+    }
+
+    @Test
+    void shouldReturnTrueWhenKeycloakSystemIsAvailable() {
+        when(restTemplate.getForEntity("http://keycloak/health/ready", String.class))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        boolean result = systemAvailabilityChecker.isKeycloakAvailable();
+
+        assertTrue(result);
+    }
+
+    @Test
+    void shouldReturnFalseWhenKeycloakIsNotAvailable() {
+        when(restTemplate.getForEntity("http://keycloak/health/ready", String.class))
+                .thenReturn(new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE));
+
+        boolean result = systemAvailabilityChecker.isKeycloakAvailable();
+
+        assertFalse(result);
+    }
+
+    @Test
+    void shouldWaitForKeycloakAvailability() {
+        when(restTemplate.getForEntity("http://keycloak/health/ready", String.class))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        boolean result = systemAvailabilityChecker.waitForKeycloakAvailability();
+
+        assertTrue(result);
+    }
+
+    @Test
+    void shouldReturnFalseWhenKeycloakMaxRetriesExceeded() {
+        when(restTemplate.getForEntity("http://keycloak/health/ready", String.class))
+                .thenThrow(new RuntimeException("Connection failed"));
+
+        boolean result = systemAvailabilityChecker.waitForKeycloakAvailability();
 
         assertFalse(result);
     }
