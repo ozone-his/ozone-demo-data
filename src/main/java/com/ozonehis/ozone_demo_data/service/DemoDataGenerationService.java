@@ -23,7 +23,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -54,7 +53,6 @@ public class DemoDataGenerationService {
     @Value("${number.of.demo.patients:" + DEFAULT_DEMO_PATIENTS + "}")
     int numberOfDemoPatients;
 
-    @Scheduled(initialDelay = INITIAL_DELAY, fixedRate = Long.MAX_VALUE)
     public void generateDemoData() {
         try {
             if (!ensureSystemAvailability()) {
