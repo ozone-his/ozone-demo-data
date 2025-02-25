@@ -73,13 +73,4 @@ class DemoDataGenerationServiceTest {
         assertEquals(MediaType.APPLICATION_JSON, headers.getContentType());
         assertTrue(headers.containsKey(HttpHeaders.AUTHORIZATION));
     }
-
-    @Test
-    void shouldReturnFalseWhenSystemIsNotAvailable() {
-        when(systemAvailabilityChecker.waitForOpenMRSAvailability()).thenReturn(false);
-
-        boolean result = service.ensureSystemAvailability();
-
-        assertFalse(result);
-    }
 }

@@ -21,6 +21,7 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ozonehis.ozone_demo_data.config.KeycloakConfig;
+import com.ozonehis.ozone_demo_data.util.SystemAvailabilityChecker;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collections;
@@ -55,6 +56,9 @@ class KeycloakUserServiceTest {
     @Mock
     private KeycloakConfig keycloakConfig;
 
+    @Mock
+    private SystemAvailabilityChecker systemAvailabilityChecker;
+
     @InjectMocks
     private KeycloakUserService keycloakUserService;
 
@@ -65,7 +69,8 @@ class KeycloakUserServiceTest {
     @BeforeEach
     void setUp() {
         mockCloser = openMocks(this);
-        keycloakUserService = new KeycloakUserService(keycloak, keycloakConfig, new ObjectMapper());
+        keycloakUserService =
+                new KeycloakUserService(keycloak, keycloakConfig, new ObjectMapper(), systemAvailabilityChecker);
         keycloakUserService.setUsersJsonPath(USERS_JSON_PATH);
     }
 

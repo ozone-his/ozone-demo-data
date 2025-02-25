@@ -9,6 +9,7 @@ package com.ozonehis.ozone_demo_data.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ozonehis.ozone_demo_data.config.KeycloakConfig;
+import com.ozonehis.ozone_demo_data.util.SystemAvailabilityChecker;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,8 @@ public class KeycloakUserService {
 
     private final ObjectMapper objectMapper;
 
+    private final SystemAvailabilityChecker systemAvailabilityChecker;
+
     @Data
     static class KeycloakUsers {
 
@@ -47,6 +50,11 @@ public class KeycloakUserService {
 
     public void createUsers() throws IOException {
         log.info("Starting user creation process from JSON file: {}", usersJsonPath);
+        if (!systemAvailabilityChecker.waitForKeycloakAvailability()) {
+            log.error("Keycloak is not available. Aborting user creation.");
+            return;
+        }
+
         KeycloakUsers users = loadUsersFromJson();
         log.info("Found {} users to create", users.getUsers().size());
         users.getUsers().forEach(this::createAndConfigureUser);

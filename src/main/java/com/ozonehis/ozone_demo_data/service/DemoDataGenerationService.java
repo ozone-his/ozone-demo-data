@@ -37,8 +37,6 @@ public class DemoDataGenerationService {
 
     private static final int DEFAULT_DEMO_PATIENTS = 50;
 
-    private static final long INITIAL_DELAY = 10000;
-
     private final SystemAvailabilityChecker systemAvailabilityChecker;
 
     private final RestTemplate restTemplate;
@@ -55,21 +53,14 @@ public class DemoDataGenerationService {
 
     public void generateDemoData() {
         try {
-            if (!ensureSystemAvailability()) {
+            if (!systemAvailabilityChecker.waitForOpenMRSAvailability()) {
+                log.error("OpenMRS is not available. Aborting demo data generation.");
                 return;
             }
             performDemoDataGeneration();
         } catch (Exception e) {
             handleGenerationError(e);
         }
-    }
-
-    boolean ensureSystemAvailability() {
-        if (!systemAvailabilityChecker.waitForOpenMRSAvailability()) {
-            log.error("OpenMRS is not available. Aborting demo data generation.");
-            return false;
-        }
-        return true;
     }
 
     private void performDemoDataGeneration() {
