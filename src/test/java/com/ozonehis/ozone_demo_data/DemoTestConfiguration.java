@@ -7,8 +7,8 @@
  */
 package com.ozonehis.ozone_demo_data;
 
-import com.ozonehis.ozone_demo_data.config.BeanConfiguration;
+import com.ozonehis.ozone_demo_data.config.OzoneDemoDataConfig;
 import org.springframework.test.context.ContextConfiguration;
 
-@ContextConfiguration(classes = {BeanConfiguration.class})
+@ContextConfiguration(classes = {OzoneDemoDataConfig.class})
 public class DemoTestConfiguration {}
