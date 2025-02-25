@@ -1,0 +1,62 @@
+{
+  "users": [
+    {
+      "username": "jdoe",
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "email": "jdoe@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "requiredActions": [],
+      "realmRoles": [
+        "default-roles-ozone"
+      ],
+      "clientRoles": {
+        "openmrs": [
+          "System Developer"
+        ],
+        "superset": [
+          "Gamma"
+        ]
+      },
+      "notBefore": 0,
+      "groups": []
+    },
+    {
+      "username": "mj",
+      "firstName": "Jane",
+      "lastName": "Mary",
+      "email": "mj@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "requiredActions": [],
+      "realmRoles": [
+        "default-roles-ozone"
+      ],
+      "clientRoles": {
+        "openmrs": [
+          "System Developer"
+        ],
+        "superset": [
+          "Public"
+        ]
+      },
+      "notBefore": 0,
+      "groups": []
+    }
+  ]
+}

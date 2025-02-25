@@ -9,108 +9,149 @@ package com.ozonehis.ozone_demo_data.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ozonehis.ozone_demo_data.config.KeycloakConfig;
-import jakarta.annotation.PostConstruct;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class KeycloakUserService {
-	
-	private static final String USERS_JSON_PATH = "keycloak/users.json";
-	
-	private final Keycloak keycloak;
-	
-	private final KeycloakConfig keycloakConfig;
-	
-	private final ObjectMapper objectMapper;
-	
-	@PostConstruct
-	public void initializeUsers() {
-		try {
-			createUsers();
-		}
-		catch (IOException e) {
-			log.error("Failed to initialize Keycloak users", e);
-		}
-	}
-	
-	@Data
-	private static class KeycloakUsers {
-		
-		private List<UserRepresentation> users;
-	}
-	
-	private void createUsers() throws IOException {
-		KeycloakUsers users = loadUsersFromJson();
-		users.getUsers().forEach(this::createAndConfigureUser);
-	}
-	
-	private KeycloakUsers loadUsersFromJson() throws IOException {
-		ClassPathResource resource = new ClassPathResource(USERS_JSON_PATH);
-		return objectMapper.readValue(resource.getInputStream(), KeycloakUsers.class);
-	}
-	
-	private void createAndConfigureUser(UserRepresentation user) {
-		UserRepresentation userRep = convertToUserRepresentation(user);
-		String userId = createKeycloakUser(userRep);
-		
-		if (userId != null) {
-			assignRealmRoles(userId, user.getRealmRoles());
-			assignClientRoles(userId, user.getClientRoles());
-		}
-	}
-	
-	private String createKeycloakUser(UserRepresentation userRep) {
-		try {
-			keycloak.realm(keycloakConfig.getRealm()).users().create(userRep);
-			
-			return keycloak.realm(keycloakConfig.getRealm()).users().search(userRep.getUsername()).get(0).getId();
-		}
-		catch (Exception e) {
-			log.error("Failed to create user: {}", userRep.getUsername(), e);
-			return null;
-		}
-	}
-	
-	private void assignRealmRoles(String userId, List<String> realmRoles) {
-		if (realmRoles == null || realmRoles.isEmpty())
-			return;
-		
-		List<RoleRepresentation> roles = realmRoles.stream()
-				.map(roleName -> keycloak.realm(keycloakConfig.getRealm()).roles().get(roleName).toRepresentation())
-				.toList();
-		
-		keycloak.realm(keycloakConfig.getRealm()).users().get(userId).roles().realmLevel().add(roles);
-	}
-	
-	private void assignClientRoles(String userId, Map<String, List<String>> clientRoles) {
-		if (clientRoles == null || clientRoles.isEmpty())
-			return;
-		
-		clientRoles.forEach((clientId, roles) -> {
-			String client = keycloak.realm(keycloakConfig.getRealm()).clients().findByClientId(clientId).get(0).getId();
-			
-			List<RoleRepresentation> clientRolesList = roles.stream()
-					.map(roleName -> keycloak.realm(keycloakConfig.getRealm()).clients().get(client).roles().get(roleName)
-							.toRepresentation()).toList();
-			
-			keycloak.realm(keycloakConfig.getRealm()).users().get(userId).roles().clientLevel(client).add(clientRolesList);
-		});
-	}
-	
-	private UserRepresentation convertToUserRepresentation(UserRepresentation user) {
-		return objectMapper.convertValue(user, UserRepresentation.class);
-	}
+
+    @Setter
+    @Value("${keycloak.users.json.path}")
+    private String usersJsonPath;
+
+    private final Keycloak keycloak;
+
+    private final KeycloakConfig keycloakConfig;
+
+    private final ObjectMapper objectMapper;
+
+    @Data
+    static class KeycloakUsers {
+
+        private List<UserRepresentation> users;
+    }
+
+    public void createUsers() throws IOException {
+        log.info("Starting user creation process from JSON file: {}", usersJsonPath);
+        KeycloakUsers users = loadUsersFromJson();
+        log.info("Found {} users to create", users.getUsers().size());
+        users.getUsers().forEach(this::createAndConfigureUser);
+        log.info("Completed user creation process");
+    }
+
+    KeycloakUsers loadUsersFromJson() throws IOException {
+        log.debug("Loading users from JSON file");
+        ClassPathResource resource = new ClassPathResource(usersJsonPath);
+        KeycloakUsers users = objectMapper.readValue(resource.getInputStream(), KeycloakUsers.class);
+        log.debug("Successfully loaded users configuration from JSON");
+        return users;
+    }
+
+    void createAndConfigureUser(UserRepresentation user) {
+        log.info("Processing user creation for username: {}", user.getUsername());
+        Optional<String> userId = createKeycloakUser(user);
+
+        if (userId.isPresent()) {
+            log.debug("User {} created successfully with ID: {}", user.getUsername(), userId.get());
+
+            if (user.getRealmRoles() != null && !user.getRealmRoles().isEmpty()) {
+                log.debug(
+                        "Assigning {} realm roles to user {}",
+                        user.getRealmRoles().size(),
+                        user.getUsername());
+                assignRealmRoles(userId.get(), user.getRealmRoles());
+            }
+
+            if (user.getClientRoles() != null && !user.getClientRoles().isEmpty()) {
+                log.debug(
+                        "Assigning client roles from {} clients to user {}",
+                        user.getClientRoles().size(),
+                        user.getUsername());
+                assignClientRoles(userId.get(), user.getClientRoles());
+            }
+
+            log.info("Successfully completed configuration for user: {}", user.getUsername());
+        } else {
+            log.warn("Failed to create user: {}. Skipping role assignments", user.getUsername());
+        }
+    }
+
+    Optional<String> createKeycloakUser(UserRepresentation userRep) {
+        try {
+            keycloak.realm(keycloakConfig.getRealm()).users().create(userRep);
+
+            return Optional.of(keycloak.realm(keycloakConfig.getRealm())
+                    .users()
+                    .search(userRep.getUsername())
+                    .get(0)
+                    .getId());
+        } catch (Exception e) {
+            log.error("Failed to create user: {}", userRep.getUsername(), e);
+            return Optional.empty();
+        }
+    }
+
+    void assignRealmRoles(String userId, List<String> realmRoles) {
+        if (realmRoles == null || realmRoles.isEmpty()) return;
+
+        log.debug("Starting realm role assignment for user ID: {}", userId);
+        List<RoleRepresentation> roles = realmRoles.stream()
+                .map(roleName -> keycloak.realm(keycloakConfig.getRealm())
+                        .roles()
+                        .get(roleName)
+                        .toRepresentation())
+                .toList();
+
+        keycloak.realm(keycloakConfig.getRealm())
+                .users()
+                .get(userId)
+                .roles()
+                .realmLevel()
+                .add(roles);
+        log.debug("Successfully assigned {} realm roles to user ID: {}", roles.size(), userId);
+    }
+
+    void assignClientRoles(String userId, Map<String, List<String>> clientRoles) {
+        if (clientRoles == null || clientRoles.isEmpty()) return;
+
+        log.debug("Starting client role assignment for user ID: {}", userId);
+        clientRoles.forEach((clientId, roles) -> {
+            String client = keycloak.realm(keycloakConfig.getRealm())
+                    .clients()
+                    .findByClientId(clientId)
+                    .get(0)
+                    .getId();
+
+            List<RoleRepresentation> clientRolesList = roles.stream()
+                    .map(roleName -> keycloak.realm(keycloakConfig.getRealm())
+                            .clients()
+                            .get(client)
+                            .roles()
+                            .get(roleName)
+                            .toRepresentation())
+                    .toList();
+
+            keycloak.realm(keycloakConfig.getRealm())
+                    .users()
+                    .get(userId)
+                    .roles()
+                    .clientLevel(client)
+                    .add(clientRolesList);
+            log.debug("Successfully assigned {} roles for client {} to user ID: {}", roles.size(), clientId, userId);
+        });
+    }
 }
