@@ -29,7 +29,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DemoDataGenerationService {
+public class DemoDataService {
 
     private static final String GENERATE_DEMO_DATA_ENDPOINT = "/ws/rest/v1/referencedemodata/generate";
 
@@ -51,19 +51,19 @@ public class DemoDataGenerationService {
     @Value("${number.of.demo.patients:" + DEFAULT_DEMO_PATIENTS + "}")
     int numberOfDemoPatients;
 
-    public void generateDemoData() {
+    public void triggerDemoData() {
         try {
             if (!systemAvailabilityChecker.waitForOpenMRSAvailability()) {
                 log.error("OpenMRS is not available. Aborting demo data generation.");
                 return;
             }
-            performDemoDataGeneration();
+            triggerDemoDataGeneration();
         } catch (Exception e) {
-            handleGenerationError(e);
+            throw new DemoDataGenerationException("Failed to generate demo data", e);
         }
     }
 
-    private void performDemoDataGeneration() {
+    private void triggerDemoDataGeneration() {
         HttpHeaders headers = createAuthenticatedHeaders();
         Map<String, Object> requestBody = createRequestBody();
 
@@ -130,16 +130,11 @@ public class DemoDataGenerationService {
 
     private void validateResponse(ResponseEntity<String> response) {
         if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new GenerationException("Demo data generation failed with status: " + response.getStatusCode());
+            throw new DemoDataGenerationException(
+                    "Demo data generation failed with status: " + response.getStatusCode());
         }
     }
 
-    private void handleGenerationError(Exception e) {
-        log.error("Comprehensive error during demo data generation", e);
-        // Potential additional error handling like metrics, alerts, etc.
-    }
-
-    // Custom exception classes for more specific error handling
     private static class AuthenticationException extends RuntimeException {
 
         public AuthenticationException(String message, Throwable cause) {
@@ -147,10 +142,14 @@ public class DemoDataGenerationService {
         }
     }
 
-    private static class GenerationException extends RuntimeException {
+    private static class DemoDataGenerationException extends RuntimeException {
 
-        public GenerationException(String message) {
+        public DemoDataGenerationException(String message) {
             super(message);
+        }
+
+        public DemoDataGenerationException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }

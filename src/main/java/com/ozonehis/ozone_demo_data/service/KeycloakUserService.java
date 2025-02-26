@@ -20,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +49,10 @@ public class KeycloakUserService {
     static class KeycloakUsers {
 
         private List<UserRepresentation> users;
+    }
+
+    RealmResource realmResource() {
+        return keycloak.realm(keycloakConfig.getRealm());
     }
 
     public void createUsers() throws IOException {
@@ -108,18 +114,18 @@ public class KeycloakUserService {
     }
 
     Optional<String> createKeycloakUser(UserRepresentation userRep) {
-        try {
-            keycloak.realm(keycloakConfig.getRealm()).users().create(userRep);
-
-            return Optional.of(keycloak.realm(keycloakConfig.getRealm())
-                    .users()
-                    .search(userRep.getUsername())
-                    .get(0)
-                    .getId());
-        } catch (Exception e) {
-            log.error("Failed to create user: {}", userRep.getUsername(), e);
-            return Optional.empty();
+        UsersResource usersResource = realmResource().users();
+        if (usersResource.search(userRep.getUsername()).isEmpty()) {
+            try (var response = usersResource.create(userRep)) {
+                if (response.getStatus() != 201) {
+                    log.error("Failed to create user: {}", userRep.getUsername());
+                    return Optional.empty();
+                }
+            }
         }
+
+        return Optional.of(
+                realmResource().users().search(userRep.getUsername()).get(0).getId());
     }
 
     void assignRealmRoles(String userId, List<String> realmRoles) {
@@ -127,18 +133,10 @@ public class KeycloakUserService {
 
         log.debug("Starting realm role assignment for user ID: {}", userId);
         List<RoleRepresentation> roles = realmRoles.stream()
-                .map(roleName -> keycloak.realm(keycloakConfig.getRealm())
-                        .roles()
-                        .get(roleName)
-                        .toRepresentation())
+                .map(roleName -> realmResource().roles().get(roleName).toRepresentation())
                 .toList();
 
-        keycloak.realm(keycloakConfig.getRealm())
-                .users()
-                .get(userId)
-                .roles()
-                .realmLevel()
-                .add(roles);
+        realmResource().users().get(userId).roles().realmLevel().add(roles);
         log.debug("Successfully assigned {} realm roles to user ID: {}", roles.size(), userId);
     }
 
@@ -147,14 +145,11 @@ public class KeycloakUserService {
 
         log.debug("Starting client role assignment for user ID: {}", userId);
         clientRoles.forEach((clientId, roles) -> {
-            String client = keycloak.realm(keycloakConfig.getRealm())
-                    .clients()
-                    .findByClientId(clientId)
-                    .get(0)
-                    .getId();
+            String client =
+                    realmResource().clients().findByClientId(clientId).get(0).getId();
 
             List<RoleRepresentation> clientRolesList = roles.stream()
-                    .map(roleName -> keycloak.realm(keycloakConfig.getRealm())
+                    .map(roleName -> realmResource()
                             .clients()
                             .get(client)
                             .roles()
@@ -162,12 +157,7 @@ public class KeycloakUserService {
                             .toRepresentation())
                     .toList();
 
-            keycloak.realm(keycloakConfig.getRealm())
-                    .users()
-                    .get(userId)
-                    .roles()
-                    .clientLevel(client)
-                    .add(clientRolesList);
+            realmResource().users().get(userId).roles().clientLevel(client).add(clientRolesList);
             log.debug("Successfully assigned {} roles for client {} to user ID: {}", roles.size(), clientId, userId);
         });
     }
