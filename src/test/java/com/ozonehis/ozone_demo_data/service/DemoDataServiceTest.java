@@ -23,7 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
-class DemoDataGenerationServiceTest {
+class DemoDataServiceTest {
 
     @Mock
     private SystemAvailabilityChecker systemAvailabilityChecker;
@@ -32,7 +32,7 @@ class DemoDataGenerationServiceTest {
     private OpenmrsConfig openmrsConfig;
 
     @InjectMocks
-    private DemoDataGenerationService service;
+    private DemoDataService service;
 
     @BeforeEach
     void setUp() {

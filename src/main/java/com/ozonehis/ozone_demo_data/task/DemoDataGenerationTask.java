@@ -7,7 +7,7 @@
  */
 package com.ozonehis.ozone_demo_data.task;
 
-import com.ozonehis.ozone_demo_data.service.DemoDataGenerationService;
+import com.ozonehis.ozone_demo_data.service.DemoDataService;
 import java.util.concurrent.CountDownLatch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,14 +16,14 @@ import org.springframework.stereotype.Component;
 public class DemoDataGenerationTask implements TaskExecutor {
 
     @Autowired
-    private DemoDataGenerationService demoDataGenerationService;
+    private DemoDataService demoDataService;
 
     @Override
     public void executeAsync(CountDownLatch latch) {
         try {
-            demoDataGenerationService.generateDemoData();
+            demoDataService.triggerDemoData();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to generate demo data", e);
+            throw new RuntimeException("Failed to trigger generate demo data", e);
         } finally {
             latch.countDown();
         }
