@@ -7,27 +7,31 @@
  */
 package com.ozonehis.ozone_demo_data.task;
 
-import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TaskCoordinator {
+public class TaskCoordinator implements ApplicationListener<ApplicationReadyEvent> {
 
-    // This is a list of all TaskExecutor beans that are available in the application context.
     private final List<TaskExecutor> taskExecutors;
 
     private final ApplicationContext applicationContext;
 
-    @PostConstruct
-    public void executeTasks() {
+    @Override
+    public void onApplicationEvent(ApplicationReadyEvent event) {
+        executeTasks();
+    }
+
+    private void executeTasks() {
         int numberOfTasks = taskExecutors.size();
         CountDownLatch latch = new CountDownLatch(numberOfTasks);
 
