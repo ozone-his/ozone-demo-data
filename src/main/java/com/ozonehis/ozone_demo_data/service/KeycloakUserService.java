@@ -10,6 +10,7 @@ package com.ozonehis.ozone_demo_data.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ozonehis.ozone_demo_data.config.KeycloakConfig;
 import com.ozonehis.ozone_demo_data.util.SystemAvailabilityChecker;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -62,11 +63,19 @@ public class KeycloakUserService {
     }
 
     KeycloakUsers loadUsersFromJson() throws IOException {
-        log.debug("Loading users from JSON file");
+        log.debug("Loading users from JSON file: {}", usersJsonPath);
+
+        // Try loading from external file system first
+        File externalFile = new File(usersJsonPath);
+        if (externalFile.exists()) {
+            log.debug("Loading users from external file system");
+            return objectMapper.readValue(externalFile, KeycloakUsers.class);
+        }
+
+        // Fallback to classpath resource
+        log.debug("External file not found, loading from classpath");
         ClassPathResource resource = new ClassPathResource(usersJsonPath);
-        KeycloakUsers users = objectMapper.readValue(resource.getInputStream(), KeycloakUsers.class);
-        log.debug("Successfully loaded users configuration from JSON");
-        return users;
+        return objectMapper.readValue(resource.getInputStream(), KeycloakUsers.class);
     }
 
     void createAndConfigureUser(UserRepresentation user) {
