@@ -12,18 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-@TestPropertySource(
-        properties = {
-            "keycloak.serverUrl=http://localhost:8080/keycloak",
-            "keycloak.demo.data.realm=master",
-            "keycloak.demo.data.clientId=demo",
-            "keycloak.demo.data.clientSecret=Admin123",
-            "keycloak.healthcheck.maxRetries=3",
-            "keycloak.healthcheck.retryDelayMillis=1000"
-        })
+@ActiveProfiles("test")
 class KeycloakConfigTest {
 
     @Autowired

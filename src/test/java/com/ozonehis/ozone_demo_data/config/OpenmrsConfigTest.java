@@ -13,20 +13,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-@TestPropertySource(
-        properties = {
-            "openmrs.serverUrl=http://localhost:8080/openmrs",
-            "openmrs.username=admin",
-            "openmrs.password=Admin123",
-            "openmrs.oauth.enabled=true",
-            "openmrs.oauth.clientId=testClient",
-            "openmrs.oauth.clientSecret=testSecret",
-            "openmrs.healthcheck.maxRetries=3",
-            "openmrs.healthcheck.retryDelayMillis=1000"
-        })
+@ActiveProfiles("test")
 class OpenmrsConfigTest {
 
     @Autowired
