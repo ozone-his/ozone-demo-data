@@ -30,93 +30,85 @@ public class SystemAvailabilityChecker {
     @Autowired
     private RestTemplate restTemplate;
 
-    /**
-     * This method checks if OpenMRS server is available or not. It sends a GET request to OpenMRS health endpoint.
-     *
-     * @return true if OpenMRS server is available, false otherwise.
-     */
     public boolean isOpenMRSAvailable() {
-        try {
-            HttpStatusCode status = restTemplate
-                    .getForEntity(openmrsConfig.getUrl() + "/health", String.class)
-                    .getStatusCode();
-            if (status.is2xxSuccessful()) {
-                log.info("OpenMRS server is available");
-                return true;
-            } else {
-                log.warn("OpenMRS server is not available. Status code: {}", status);
-                return false;
-            }
-        } catch (Exception e) {
-            log.warn("OpenMRS Server not ready: {}", e.getMessage());
-            return false;
-        }
+        return isSystemAvailable(openmrsConfig.getUrl() + "/health", "OpenMRS");
     }
 
     /**
-     * This method waits for OpenMRS server to be available. It retries 5 times with a delay of 5 seconds between each
-     * retry.
+     * Wait for OpenMRS server to be available
      *
-     * @return true if OpenMRS server is available, false otherwise.
+     * @return true if OpenMRS server is available, false otherwise
      */
     public boolean waitForOpenMRSAvailability() {
-        int attempts = 0;
-        while (!isOpenMRSAvailable() && attempts < openmrsConfig.getMaxRetries()) {
-            try {
-                sleep(openmrsConfig.getRetryDelayMillis());
-            } catch (InterruptedException e) {
-                log.error("Error while waiting for OpenMRS server to be available", e);
-                Thread.currentThread().interrupt();
-                return false;
-            }
-            log.info("Waiting for OpenMRS server to be available...");
-            attempts++;
-        }
-        return isOpenMRSAvailable();
+        return waitForSystemAvailability(
+                openmrsConfig.getUrl() + "/health",
+                openmrsConfig.getMaxRetries(),
+                openmrsConfig.getRetryDelayMillis(),
+                "OpenMRS");
+    }
+
+    public boolean isKeycloakAvailable() {
+        return isSystemAvailable(keycloakConfig.getServerUrl() + "/health/ready", "Keycloak");
     }
 
     /**
-     * This method checks if Keycloak server is available or not. It sends a GET request to Keycloak health endpoint.
+     * Wait for Keycloak server to be available
      *
-     * @return true if Keycloak server is available, false otherwise.
+     * @return true if Keycloak server is available, false otherwise
      */
-    public boolean isKeycloakAvailable() {
+    public boolean waitForKeycloakAvailability() {
+        return waitForSystemAvailability(
+                keycloakConfig.getServerUrl() + "/health/ready",
+                keycloakConfig.getMaxRetries(),
+                keycloakConfig.getRetryDelayMillis(),
+                "Keycloak");
+    }
+
+    /**
+     * Check if the system is available
+     *
+     * @param url        the URL to check
+     * @param systemName the name of the system
+     * @return true if the system is available, false otherwise
+     */
+    private boolean isSystemAvailable(String url, String systemName) {
         try {
-            HttpStatusCode status = restTemplate
-                    .getForEntity(keycloakConfig.getServerUrl() + "/health/ready", String.class)
-                    .getStatusCode();
+            HttpStatusCode status = restTemplate.getForEntity(url, String.class).getStatusCode();
             if (status.is2xxSuccessful()) {
-                log.info("Keycloak server is available");
+                log.info("{} server is available", systemName);
                 return true;
             } else {
-                log.warn("Keycloak server is not available. Status code: {}", status);
+                log.warn("{} server is not available. Status code: {}", systemName, status);
                 return false;
             }
         } catch (Exception e) {
-            log.warn("Keycloak Server not ready: {}", e.getMessage());
+            log.warn("{} Server not ready: {}", systemName, e.getMessage());
             return false;
         }
     }
 
     /**
-     * This method waits for Keycloak server to be available. It retries 5 times with a delay of 5 seconds between each
-     * retry.
+     * Wait for the system to be available
      *
-     * @return true if Keycloak server is available, false otherwise.
+     * @param url              the URL to check
+     * @param maxRetries       the maximum number of retries
+     * @param retryDelayMillis the delay between retries in milliseconds
+     * @param systemName       the name of the system
+     * @return true if the system is available, false otherwise
      */
-    public boolean waitForKeycloakAvailability() {
+    private boolean waitForSystemAvailability(String url, int maxRetries, long retryDelayMillis, String systemName) {
         int attempts = 0;
-        while (!isKeycloakAvailable() && attempts < keycloakConfig.getMaxRetries()) {
+        while (!isSystemAvailable(url, systemName) && attempts < maxRetries) {
             try {
-                sleep(keycloakConfig.getRetryDelayMillis());
+                sleep(retryDelayMillis);
             } catch (InterruptedException e) {
-                log.error("Error while waiting for Keycloak server to be available", e);
+                log.error("Error while waiting for {} server to be available", systemName, e);
                 Thread.currentThread().interrupt();
                 return false;
             }
-            log.info("Waiting for Keycloak server to be available...");
+            log.info("Waiting for {} server to be available...", systemName);
             attempts++;
         }
-        return isKeycloakAvailable();
+        return isSystemAvailable(url, systemName);
     }
 }

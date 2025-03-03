@@ -19,7 +19,6 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.KeycloakBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -34,8 +33,6 @@ import org.springframework.web.client.RestTemplate;
 public class DemoDataService {
 
     private static final String GENERATE_DEMO_DATA_ENDPOINT = "/ws/rest/v1/referencedemodata/generate";
-
-    private static final String KEYCLOAK_REALM = "ozone";
 
     private static final int DEFAULT_DEMO_PATIENTS = 50;
 
@@ -95,21 +92,11 @@ public class DemoDataService {
 
     private String obtainOAuthToken() {
         log.info("OAuth2 authentication enabled. Obtaining OAuth token...");
-        try (Keycloak keycloak = createKeycloakClient()) {
+        try (Keycloak keycloak = keycloakConfig.keycloak()) {
             return keycloak.tokenManager().getAccessToken().getToken();
         } catch (Exception e) {
             throw new AuthenticationException("Failed to obtain OAuth token", e);
         }
-    }
-
-    private Keycloak createKeycloakClient() {
-        return KeycloakBuilder.builder()
-                .serverUrl(keycloakConfig.getServerUrl())
-                .realm(KEYCLOAK_REALM)
-                .clientId(openmrsConfig.getClientId())
-                .clientSecret(openmrsConfig.getClientSecret())
-                .grantType("client_credentials")
-                .build();
     }
 
     private String obtainBasicAuthToken() {
