@@ -68,7 +68,7 @@ class DemoDataServiceTest {
         when(openmrsConfig.getUsername()).thenReturn("testuser");
         when(openmrsConfig.getPassword()).thenReturn("testpass");
 
-        HttpHeaders headers = service.createAuthenticatedHeaders();
+        HttpHeaders headers = service.createAuthenticationHeaders();
 
         assertEquals(MediaType.APPLICATION_JSON, headers.getContentType());
         assertTrue(headers.containsKey(HttpHeaders.AUTHORIZATION));

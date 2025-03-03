@@ -9,6 +9,8 @@ package com.ozonehis.ozone_demo_data.service;
 
 import com.ozonehis.ozone_demo_data.config.KeycloakConfig;
 import com.ozonehis.ozone_demo_data.config.OpenmrsConfig;
+import com.ozonehis.ozone_demo_data.exceptions.AuthenticationException;
+import com.ozonehis.ozone_demo_data.exceptions.DemoDataGenerationException;
 import com.ozonehis.ozone_demo_data.util.SystemAvailabilityChecker;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -64,7 +66,7 @@ public class DemoDataService {
     }
 
     private void triggerDemoDataGeneration() {
-        HttpHeaders headers = createAuthenticatedHeaders();
+        HttpHeaders headers = createAuthenticationHeaders();
         Map<String, Object> requestBody = createRequestBody();
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
@@ -76,7 +78,7 @@ public class DemoDataService {
         log.info("Demo data generation completed successfully");
     }
 
-    HttpHeaders createAuthenticatedHeaders() {
+    HttpHeaders createAuthenticationHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -132,24 +134,6 @@ public class DemoDataService {
         if (!response.getStatusCode().is2xxSuccessful()) {
             throw new DemoDataGenerationException(
                     "Demo data generation failed with status: " + response.getStatusCode());
-        }
-    }
-
-    private static class AuthenticationException extends RuntimeException {
-
-        public AuthenticationException(String message, Throwable cause) {
-            super(message, cause);
-        }
-    }
-
-    private static class DemoDataGenerationException extends RuntimeException {
-
-        public DemoDataGenerationException(String message) {
-            super(message);
-        }
-
-        public DemoDataGenerationException(String message, Throwable cause) {
-            super(message, cause);
         }
     }
 }
