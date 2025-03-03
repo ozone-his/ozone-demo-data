@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Configuration;
 public class KeycloakConfig {
 
     @NotBlank
-    @Value("${keycloak.serverUrl}")
+    @Value("${keycloak.server.url}")
     private String serverUrl;
 
     @NotBlank
@@ -35,18 +35,18 @@ public class KeycloakConfig {
     private String realm;
 
     @NotBlank
-    @Value("${keycloak.demo.data.clientId}")
+    @Value("${keycloak.demo.data.client.id}")
     private String clientId;
 
     @NotBlank
-    @Value("${keycloak.demo.data.clientSecret}")
+    @Value("${keycloak.demo.data.client.secret}")
     private String clientSecret;
 
     // Health check configuration
-    @Value("${keycloak.healthcheck.maxRetries}")
+    @Value("${keycloak.healthcheck.max.retries}")
     private int maxRetries;
 
-    @Value("${keycloak.healthcheck.retryDelayMillis}")
+    @Value("${keycloak.healthcheck.retry.delay.millis}")
     private long retryDelayMillis;
 
     @Bean

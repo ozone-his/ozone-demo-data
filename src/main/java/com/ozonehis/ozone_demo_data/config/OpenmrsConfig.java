@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Configuration;
 public class OpenmrsConfig {
 
     @NotBlank
-    @Value("${openmrs.serverUrl}")
+    @Value("${openmrs.server.url}")
     private String url;
 
     @Value("${openmrs.username}")
@@ -36,16 +36,16 @@ public class OpenmrsConfig {
     @Value("${openmrs.oauth.enabled}")
     private boolean enabled;
 
-    @Value("${openmrs.oauth.clientId}")
+    @Value("${openmrs.oauth.client.id}")
     private String clientId;
 
-    @Value("${openmrs.oauth.clientSecret}")
+    @Value("${openmrs.oauth.client.secret}")
     private String clientSecret;
 
     // Health check configuration
-    @Value("${openmrs.healthcheck.maxRetries}")
+    @Value("${openmrs.healthcheck.max.retries}")
     private int maxRetries;
 
-    @Value("${openmrs.healthcheck.retryDelayMillis}")
+    @Value("${openmrs.healthcheck.retry.delay.millis}")
     private long retryDelayMillis;
 }
