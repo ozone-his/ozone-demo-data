@@ -18,7 +18,9 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.KeycloakBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -90,12 +92,24 @@ public class DemoDataService {
         return headers;
     }
 
+    private Keycloak openKeycloak() {
+        return KeycloakBuilder.builder()
+                .serverUrl(keycloakConfig.getServerUrl())
+                .realm(keycloakConfig.getRealm())
+                .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                .clientId(openmrsConfig.getClientId())
+                .clientSecret(openmrsConfig.getClientSecret())
+                .build();
+    }
+
     private String obtainOAuthToken() {
         log.info("OAuth2 authentication enabled. Obtaining OAuth token...");
-        try (Keycloak keycloak = keycloakConfig.keycloak()) {
+        try (Keycloak keycloak = openKeycloak()) {
             return keycloak.tokenManager().getAccessToken().getToken();
         } catch (Exception e) {
             throw new AuthenticationException("Failed to obtain OAuth token", e);
+        } finally {
+            openKeycloak().close();
         }
     }
 
