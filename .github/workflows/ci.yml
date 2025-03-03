@@ -23,10 +23,26 @@ jobs:
     needs: spotless
     uses: mekomsolutions/shared-github-workflow/.github/workflows/maven-license-check.yml@main
 
-  publish:
+  maven-publish:
     if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'release' }}
     needs: license
     uses: mekomsolutions/shared-github-workflow/.github/workflows/maven-publish.yml@main
+    with:
+      artifact-name: "ozone-demo-data"
+      artifact-path: "target"
+      upload-artifacts: true
     secrets:
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+
+  docker-publish:
+    needs: maven-publish
+    uses: mekomsolutions/shared-github-workflow/.github/workflows/docker-build-publish.yml@main
+    with:
+      artifact-name: "ozone-demo-data"
+      artifact-path: "target"
+      download-artifacts: true
+      image-name: "ozone-demo-data"
+    secrets:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_REGISTRY_USERNAME }}
+      DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_REGISTRY_PASSWORD }}
