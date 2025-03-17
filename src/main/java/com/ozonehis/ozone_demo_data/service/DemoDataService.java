@@ -49,7 +49,7 @@ public class DemoDataService {
     @Value("${openmrs.oauth.enabled:false}")
     boolean oauthEnabled;
 
-    @Value("${number.of.demo.patients:" + DEFAULT_DEMO_PATIENTS + "}")
+    @Value("${openmrs.demo.patients:" + DEFAULT_DEMO_PATIENTS + "}")
     int numberOfDemoPatients;
 
     public void triggerDemoData() {

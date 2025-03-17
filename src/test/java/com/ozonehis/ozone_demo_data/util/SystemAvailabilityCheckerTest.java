@@ -82,7 +82,7 @@ class SystemAvailabilityCheckerTest {
 
     @Test
     void shouldReturnFalseWhenOpenMRSMaxRetriesExceeded() {
-        when(restTemplate.getForEntity("http://openmrs/health", String.class))
+        when(restTemplate.getForEntity("http://openmrs/health/started", String.class))
                 .thenThrow(new RuntimeException("Connection failed"));
 
         boolean result = systemAvailabilityChecker.waitForOpenMRSAvailability();

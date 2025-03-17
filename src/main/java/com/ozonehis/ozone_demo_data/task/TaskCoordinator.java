@@ -32,20 +32,30 @@ public class TaskCoordinator implements ApplicationListener<ApplicationReadyEven
     }
 
     private void executeTasks() {
-        int numberOfTasks = taskExecutors.size();
-        CountDownLatch latch = new CountDownLatch(numberOfTasks);
+        // Only count enabled tasks
+        int enabledTaskCount =
+                (int) taskExecutors.stream().filter(TaskExecutor::isEnabled).count();
+
+        CountDownLatch latch = new CountDownLatch(enabledTaskCount);
 
         taskExecutors.forEach(task -> {
             new Thread(() -> {
                         if (task.isEnabled()) {
                             log.info("Executing task: {}", task.getClass().getSimpleName());
-                            task.executeAsync(latch);
+                            try {
+                                task.executeAsync(latch);
+                            } catch (Exception e) {
+                                log.error(
+                                        "Error executing task {}: {}",
+                                        task.getClass().getSimpleName(),
+                                        e.getMessage(),
+                                        e);
+                            }
                         } else {
                             log.info(
                                     "Task {} is disabled. Skipping execution.",
                                     task.getClass().getSimpleName());
                         }
-                        latch.countDown();
                     })
                     .start();
         });
