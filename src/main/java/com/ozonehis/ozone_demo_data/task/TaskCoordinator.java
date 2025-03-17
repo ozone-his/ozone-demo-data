@@ -36,7 +36,18 @@ public class TaskCoordinator implements ApplicationListener<ApplicationReadyEven
         CountDownLatch latch = new CountDownLatch(numberOfTasks);
 
         taskExecutors.forEach(task -> {
-            new Thread(() -> task.executeAsync(latch)).start();
+            new Thread(() -> {
+                        if (task.isEnabled()) {
+                            log.info("Executing task: {}", task.getClass().getSimpleName());
+                            task.executeAsync(latch);
+                        } else {
+                            log.info(
+                                    "Task {} is disabled. Skipping execution.",
+                                    task.getClass().getSimpleName());
+                        }
+                        latch.countDown();
+                    })
+                    .start();
         });
 
         new Thread(() -> {

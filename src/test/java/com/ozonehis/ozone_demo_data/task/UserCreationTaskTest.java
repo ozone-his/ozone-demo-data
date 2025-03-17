@@ -8,7 +8,9 @@
 package com.ozonehis.ozone_demo_data.task;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
@@ -19,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class UserCreationTaskTest {
@@ -38,6 +41,17 @@ class UserCreationTaskTest {
 
         verify(keycloakUserService).createUsers();
         verify(latch).countDown();
+    }
+
+    @Test
+    void shouldReturnEnabledValueFromConfiguration() {
+        // Test when enabled is false
+        ReflectionTestUtils.setField(userCreationTask, "enabled", false);
+        assertFalse(userCreationTask.isEnabled());
+
+        // Test when enabled is true
+        ReflectionTestUtils.setField(userCreationTask, "enabled", true);
+        assertTrue(userCreationTask.isEnabled());
     }
 
     @Test

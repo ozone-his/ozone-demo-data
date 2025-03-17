@@ -102,7 +102,7 @@ public class SystemAvailabilityChecker {
             try {
                 sleep(retryDelayMillis);
             } catch (InterruptedException e) {
-                log.error("Error while waiting for {} server to be available", systemName, e);
+                log.error("Error while waiting for {} server to be available: {}", systemName, e.getMessage());
                 Thread.currentThread().interrupt();
                 return false;
             }
