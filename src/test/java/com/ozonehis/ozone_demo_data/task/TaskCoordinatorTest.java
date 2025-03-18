@@ -12,6 +12,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,6 +57,8 @@ class TaskCoordinatorTest {
                 })
                 .when(mockTask2)
                 .executeAsync(any());
+        when(mockTask1.isEnabled()).thenReturn(true);
+        when(mockTask2.isEnabled()).thenReturn(true);
 
         TaskCoordinator taskCoordinator = new TaskCoordinator(Arrays.asList(mockTask1, mockTask2), applicationContext);
         taskCoordinator.onApplicationEvent(applicationReadyEvent);
@@ -83,6 +86,7 @@ class TaskCoordinatorTest {
                 })
                 .when(mockTask1)
                 .executeAsync(any());
+        when(mockTask1.isEnabled()).thenReturn(true);
 
         TaskCoordinator taskCoordinator = new TaskCoordinator(Arrays.asList(mockTask1), applicationContext);
         taskCoordinator.onApplicationEvent(applicationReadyEvent);

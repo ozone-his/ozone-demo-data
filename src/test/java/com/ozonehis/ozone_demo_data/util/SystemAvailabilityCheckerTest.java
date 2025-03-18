@@ -52,7 +52,7 @@ class SystemAvailabilityCheckerTest {
 
     @Test
     void shouldReturnTrueWhenOpenMRSSystemIsAvailable() {
-        when(restTemplate.getForEntity("http://openmrs/health", String.class))
+        when(restTemplate.getForEntity("http://openmrs/health/started", String.class))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         boolean result = systemAvailabilityChecker.isOpenMRSAvailable();
@@ -62,7 +62,7 @@ class SystemAvailabilityCheckerTest {
 
     @Test
     void shouldReturnFalseWhenOpenMRSIsNotAvailable() {
-        when(restTemplate.getForEntity("http://openmrs/health", String.class))
+        when(restTemplate.getForEntity("http://openmrs/health/started", String.class))
                 .thenReturn(new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE));
 
         boolean result = systemAvailabilityChecker.isOpenMRSAvailable();
@@ -72,7 +72,7 @@ class SystemAvailabilityCheckerTest {
 
     @Test
     void shouldWaitForOpenMRSAvailability() {
-        when(restTemplate.getForEntity("http://openmrs/health", String.class))
+        when(restTemplate.getForEntity("http://openmrs/health/started", String.class))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         boolean result = systemAvailabilityChecker.waitForOpenMRSAvailability();
@@ -82,7 +82,7 @@ class SystemAvailabilityCheckerTest {
 
     @Test
     void shouldReturnFalseWhenOpenMRSMaxRetriesExceeded() {
-        when(restTemplate.getForEntity("http://openmrs/health", String.class))
+        when(restTemplate.getForEntity("http://openmrs/health/started", String.class))
                 .thenThrow(new RuntimeException("Connection failed"));
 
         boolean result = systemAvailabilityChecker.waitForOpenMRSAvailability();

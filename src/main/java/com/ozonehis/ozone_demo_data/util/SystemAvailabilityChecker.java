@@ -31,7 +31,7 @@ public class SystemAvailabilityChecker {
     private RestTemplate restTemplate;
 
     public boolean isOpenMRSAvailable() {
-        return isSystemAvailable(openmrsConfig.getUrl() + "/health", "OpenMRS");
+        return isSystemAvailable(openmrsConfig.getUrl() + "/health/started", "OpenMRS");
     }
 
     /**
@@ -41,7 +41,7 @@ public class SystemAvailabilityChecker {
      */
     public boolean waitForOpenMRSAvailability() {
         return waitForSystemAvailability(
-                openmrsConfig.getUrl() + "/health",
+                openmrsConfig.getUrl() + "/health/started",
                 openmrsConfig.getMaxRetries(),
                 openmrsConfig.getRetryDelayMillis(),
                 "OpenMRS");
@@ -102,7 +102,7 @@ public class SystemAvailabilityChecker {
             try {
                 sleep(retryDelayMillis);
             } catch (InterruptedException e) {
-                log.error("Error while waiting for {} server to be available", systemName, e);
+                log.error("Error while waiting for {} server to be available: {}", systemName, e.getMessage());
                 Thread.currentThread().interrupt();
                 return false;
             }

@@ -20,4 +20,11 @@ public interface TaskExecutor {
      * @param latch the countdown latch to signal when the task is complete
      */
     void executeAsync(CountDownLatch latch);
+
+    /**
+     * Checks if the task is enabled.
+     *
+     * @return true if the task is enabled, false otherwise
+     */
+    boolean isEnabled();
 }
