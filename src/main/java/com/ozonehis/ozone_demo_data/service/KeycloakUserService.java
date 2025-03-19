@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
@@ -124,8 +125,12 @@ public class KeycloakUserService {
             }
         }
 
-        return Optional.of(
-                realmResource().users().search(userRep.getUsername()).get(0).getId());
+        List<UserRepresentation> users = usersResource.search(userRep.getUsername());
+        if (users.isEmpty()) {
+            log.error("User {} was not found after creation.", userRep.getUsername());
+            return Optional.empty();
+        }
+        return Optional.of(users.get(0).getId());
     }
 
     void assignRealmRoles(String userId, List<String> realmRoles) {
@@ -145,8 +150,12 @@ public class KeycloakUserService {
 
         log.debug("Starting client role assignment for user ID: {}", userId);
         clientRoles.forEach((clientId, roles) -> {
-            String client =
-                    realmResource().clients().findByClientId(clientId).get(0).getId();
+            List<ClientRepresentation> clients = realmResource().clients().findByClientId(clientId);
+            if (clients.isEmpty()) {
+                log.warn("Client with ID {} not found. Skipping role assignment for this client.", clientId);
+                return;
+            }
+            String client = clients.get(0).getId();
 
             List<RoleRepresentation> clientRolesList = roles.stream()
                     .map(roleName -> realmResource()
