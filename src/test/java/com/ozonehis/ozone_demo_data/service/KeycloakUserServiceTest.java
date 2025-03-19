@@ -220,4 +220,23 @@ class KeycloakUserServiceTest {
 
         verify(keycloak, never()).realm(anyString());
     }
+
+    @Test
+    void shouldSetUserAttributesSuccessfully() {
+        String userId = "testUserId";
+        Map<String, List<String>> attributes = Map.of("attribute1", List.of("value1"), "attribute2", List.of("value2"));
+
+        UsersResource usersResource = mock(UsersResource.class);
+        UserResource userResource = mock(UserResource.class);
+        UserRepresentation userRepresentation = new UserRepresentation();
+
+        when(realmResource.users()).thenReturn(usersResource);
+        when(usersResource.get(userId)).thenReturn(userResource);
+        when(userResource.toRepresentation()).thenReturn(userRepresentation);
+
+        keycloakUserService.setUserAttributes(userId, attributes);
+
+        verify(userResource).update(userRepresentation);
+        assertEquals(attributes, userRepresentation.getAttributes());
+    }
 }

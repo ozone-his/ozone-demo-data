@@ -108,6 +108,11 @@ public class KeycloakUserService {
                 assignClientRoles(userId.get(), user.getClientRoles());
             }
 
+            if (user.getAttributes() != null && !user.getAttributes().isEmpty()) {
+                log.debug("Setting attributes for user {}", user.getUsername());
+                setUserAttributes(userId.get(), user.getAttributes());
+            }
+
             log.info("Successfully completed configuration for user: {}", user.getUsername());
         } else {
             log.warn("Failed to create user: {}. Skipping role assignments", user.getUsername());
@@ -131,6 +136,14 @@ public class KeycloakUserService {
             return Optional.empty();
         }
         return Optional.of(users.get(0).getId());
+    }
+
+    void setUserAttributes(String userId, Map<String, List<String>> attributes) {
+        UsersResource usersResource = realmResource().users();
+        UserRepresentation user = usersResource.get(userId).toRepresentation();
+        user.setAttributes(attributes);
+        usersResource.get(userId).update(user);
+        log.debug("Successfully set attributes for user ID: {}", userId);
     }
 
     void assignRealmRoles(String userId, List<String> realmRoles) {
