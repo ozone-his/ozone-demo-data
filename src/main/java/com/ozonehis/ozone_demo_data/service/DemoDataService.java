@@ -52,13 +52,20 @@ public class DemoDataService {
     @Value("${openmrs.demo.patients:" + DEFAULT_DEMO_PATIENTS + "}")
     int numberOfDemoPatients;
 
-    public void triggerDemoData() {
+    private boolean isDemoDataGenerated = false;
+
+    public synchronized void triggerDemoData() {
+        if (isDemoDataGenerated) {
+            log.info("Demo data already generated. Skipping.");
+            return;
+        }
         try {
             if (!systemAvailabilityChecker.waitForOpenMRSAvailability()) {
                 log.error("OpenMRS is not available. Aborting demo data generation.");
                 return;
             }
             triggerDemoDataGeneration();
+            isDemoDataGenerated = true;
         } catch (Exception e) {
             throw new DemoDataGenerationException("Failed to generate demo data", e);
         }

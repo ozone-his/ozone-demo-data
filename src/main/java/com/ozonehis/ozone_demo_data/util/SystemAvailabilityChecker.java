@@ -98,7 +98,9 @@ public class SystemAvailabilityChecker {
      */
     private boolean waitForSystemAvailability(String url, int maxRetries, long retryDelayMillis, String systemName) {
         int attempts = 0;
-        while (!isSystemAvailable(url, systemName) && attempts < maxRetries) {
+        boolean isAvailable;
+
+        while (!(isAvailable = isSystemAvailable(url, systemName)) && attempts < maxRetries) {
             try {
                 sleep(retryDelayMillis);
             } catch (InterruptedException e) {
@@ -109,6 +111,6 @@ public class SystemAvailabilityChecker {
             log.info("Waiting for {} server to be available...", systemName);
             attempts++;
         }
-        return isSystemAvailable(url, systemName);
+        return isAvailable;
     }
 }
