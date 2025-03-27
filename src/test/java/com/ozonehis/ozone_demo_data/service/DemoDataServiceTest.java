@@ -12,6 +12,8 @@ import static org.mockito.Mockito.*;
 
 import com.ozonehis.ozone_demo_data.config.OpenmrsConfig;
 import com.ozonehis.ozone_demo_data.util.SystemAvailabilityChecker;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,8 +21,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.web.client.RestTemplate;
 
 @ExtendWith(SpringExtension.class)
 class DemoDataServiceTest {
@@ -33,6 +38,9 @@ class DemoDataServiceTest {
 
     @InjectMocks
     private DemoDataService service;
+
+    @Mock
+    private RestTemplate restTemplate;
 
     @BeforeEach
     void setUp() {
@@ -72,5 +80,67 @@ class DemoDataServiceTest {
 
         assertEquals(MediaType.APPLICATION_JSON, headers.getContentType());
         assertTrue(headers.containsKey(HttpHeaders.AUTHORIZATION));
+    }
+
+    @Test
+    void shouldUpdateCreateDemoPatientsOnNextStartupSettingSettingIfExists() {
+        when(openmrsConfig.getUrl()).thenReturn("http://test-openmrs.com");
+        Map<String, Object> settingResponse = new HashMap<>();
+        List<Map<String, Object>> results = List.of(Map.of("uuid", "test-uuid"));
+        settingResponse.put("results", results);
+
+        when(restTemplate.exchange(
+                        contains("/systemsetting/?q=referencedemodata.createDemoPatientsOnNextStartup"),
+                        eq(HttpMethod.GET),
+                        any(),
+                        eq(Map.class)))
+                .thenReturn(ResponseEntity.ok(settingResponse));
+
+        when(restTemplate.exchange(contains("/systemsetting/test-uuid"), eq(HttpMethod.POST), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok().build());
+
+        service.updateCreateDemoPatientsOnNextStartupSetting();
+
+        verify(restTemplate)
+                .exchange(contains("/systemsetting/test-uuid"), eq(HttpMethod.POST), any(), eq(String.class));
+    }
+
+    @Test
+    void shouldHandleEmptyResultsWhenCreateDemoPatientsOnNextStartupSettingSettingDoesNotExist() {
+        when(openmrsConfig.getUrl()).thenReturn("http://test-openmrs.com");
+        Map<String, Object> settingResponse = new HashMap<>();
+        settingResponse.put("results", List.of());
+
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(Map.class)))
+                .thenReturn(ResponseEntity.ok(settingResponse));
+
+        service.updateCreateDemoPatientsOnNextStartupSetting();
+
+        verify(restTemplate, never())
+                .exchange(contains("/systemsetting/"), eq(HttpMethod.POST), any(), eq(String.class));
+    }
+
+    @Test
+    void shouldHandleFailedGetCreateDemoPatientsOnNextStartupSettingRequest() {
+        when(openmrsConfig.getUrl()).thenReturn("http://test-openmrs.com");
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(Map.class)))
+                .thenReturn(ResponseEntity.badRequest().build());
+
+        service.updateCreateDemoPatientsOnNextStartupSetting();
+
+        verify(restTemplate, never())
+                .exchange(contains("/systemsetting/"), eq(HttpMethod.POST), any(), eq(String.class));
+    }
+
+    @Test
+    void shouldHandleNullResponseBody() {
+        when(openmrsConfig.getUrl()).thenReturn("http://test-openmrs.com");
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(Map.class)))
+                .thenReturn(ResponseEntity.ok().build());
+
+        service.updateCreateDemoPatientsOnNextStartupSetting();
+
+        verify(restTemplate, never())
+                .exchange(contains("/systemsetting/"), eq(HttpMethod.POST), any(), eq(String.class));
     }
 }

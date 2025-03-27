@@ -15,6 +15,7 @@ import com.ozonehis.ozone_demo_data.util.SystemAvailabilityChecker;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ import org.keycloak.admin.client.KeycloakBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,11 @@ public class DemoDataService {
     private static final String GENERATE_DEMO_DATA_ENDPOINT = "/ws/rest/v1/referencedemodata/generate";
 
     private static final int DEFAULT_DEMO_PATIENTS = 50;
+
+    private static final String CREATE_DEMO_PATIENTS_ON_NEXT_STARTUP_PROPERTY =
+            "referencedemodata.createDemoPatientsOnNextStartup";
+
+    private static final String SYSTEM_SETTING_ENDPOINT = "/ws/rest/v1/systemsetting";
 
     private final SystemAvailabilityChecker systemAvailabilityChecker;
 
@@ -71,6 +78,46 @@ public class DemoDataService {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    void updateCreateDemoPatientsOnNextStartupSetting() {
+        try {
+            // Get the system setting details
+            HttpHeaders headers = createAuthenticationHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Get setting UUID
+            String settingUrl = openmrsConfig.getUrl() + SYSTEM_SETTING_ENDPOINT + "/?q="
+                    + CREATE_DEMO_PATIENTS_ON_NEXT_STARTUP_PROPERTY;
+            HttpEntity<Void> request = new HttpEntity<>(headers);
+
+            var response = restTemplate.exchange(settingUrl, HttpMethod.GET, request, Map.class);
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                log.error("Failed to get {} system setting", CREATE_DEMO_PATIENTS_ON_NEXT_STARTUP_PROPERTY);
+                return;
+            }
+
+            List<Map<String, Object>> results =
+                    (List<Map<String, Object>>) response.getBody().get("results");
+            if (results.isEmpty()) {
+                log.error(CREATE_DEMO_PATIENTS_ON_NEXT_STARTUP_PROPERTY + " system setting not found");
+                return;
+            }
+
+            String uuid = (String) results.get(0).get("uuid");
+            HttpEntity<Map<String, String>> updateRequest = new HttpEntity<>(Map.of("value", "0"), headers);
+            String updateUrl = openmrsConfig.getUrl() + SYSTEM_SETTING_ENDPOINT + "/" + uuid;
+
+            restTemplate
+                    .exchange(updateUrl, HttpMethod.POST, updateRequest, String.class)
+                    .getStatusCode()
+                    .is2xxSuccessful();
+
+            log.info("Successfully updated system setting to disable demo data generation on the next startup");
+        } catch (Exception e) {
+            log.error("Failed to update system setting: {}", e.getMessage(), e);
+        }
+    }
+
     private void triggerDemoDataGeneration() {
         HttpHeaders headers = createAuthenticationHeaders();
         Map<String, Object> requestBody = createRequestBody();
@@ -81,6 +128,7 @@ public class DemoDataService {
         ResponseEntity<String> response = restTemplate.postForEntity(generateDemoDataUrl, request, String.class);
 
         validateResponse(response);
+        updateCreateDemoPatientsOnNextStartupSetting();
         log.info("Demo data generation completed successfully");
     }
 
