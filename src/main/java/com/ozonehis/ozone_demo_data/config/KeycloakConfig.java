@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * This class is used to configure Keycloak server connection. It contains the configuration details like URL, realm,
- * clientId, clientSecret etc. It also creates a Keycloak object which is used to interact with Keycloak server.
+ * clientId, clientSecret, etc. It also creates a Keycloak object which is used to interact with Keycloak server.
  */
 @Setter
 @Getter
@@ -43,6 +43,10 @@ public class KeycloakConfig {
     private String clientSecret;
 
     // Health check configuration
+    @NotBlank
+    @Value("${keycloak.healthcheck.endpoint}")
+    private String healthCheckEndpoint;
+
     @Value("${keycloak.healthcheck.max.retries}")
     private int maxRetries;
 

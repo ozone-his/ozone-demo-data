@@ -29,6 +29,7 @@ class KeycloakConfigTest {
         assertEquals("Admin123", keycloakConfig.getClientSecret());
 
         // Health check configuration
+        assertEquals("http://localhost:9000/health/ready", keycloakConfig.getHealthCheckEndpoint());
         assertEquals(3, keycloakConfig.getMaxRetries());
         assertEquals(1000L, keycloakConfig.getRetryDelayMillis());
     }
