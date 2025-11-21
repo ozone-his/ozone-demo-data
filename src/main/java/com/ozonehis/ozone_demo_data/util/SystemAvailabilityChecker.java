@@ -48,7 +48,7 @@ public class SystemAvailabilityChecker {
     }
 
     public boolean isKeycloakAvailable() {
-        return isSystemAvailable(keycloakConfig.getServerUrl() + "/health/ready", "Keycloak");
+        return isSystemAvailable(keycloakConfig.getHealthCheckEndpoint(), "Keycloak");
     }
 
     /**
@@ -58,7 +58,7 @@ public class SystemAvailabilityChecker {
      */
     public boolean waitForKeycloakAvailability() {
         return waitForSystemAvailability(
-                keycloakConfig.getServerUrl() + "/health/ready",
+                keycloakConfig.getHealthCheckEndpoint(),
                 keycloakConfig.getMaxRetries(),
                 keycloakConfig.getRetryDelayMillis(),
                 "Keycloak");

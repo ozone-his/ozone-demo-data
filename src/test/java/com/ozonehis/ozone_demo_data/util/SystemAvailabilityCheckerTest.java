@@ -39,6 +39,10 @@ class SystemAvailabilityCheckerTest {
     @InjectMocks
     private SystemAvailabilityChecker systemAvailabilityChecker;
 
+    private static final String OPENMRS_HEALTH_URL = "http://openmrs/health/started";
+
+    private static final String KEYCLOAK_HEALTH_URL = "http://localhost:9000/health/ready";
+
     @BeforeEach
     void setUp() {
         lenient().when(openmrsConfig.getUrl()).thenReturn("http://openmrs");
@@ -48,11 +52,12 @@ class SystemAvailabilityCheckerTest {
         lenient().when(keycloakConfig.getServerUrl()).thenReturn("http://keycloak");
         lenient().when(keycloakConfig.getMaxRetries()).thenReturn(5);
         lenient().when(keycloakConfig.getRetryDelayMillis()).thenReturn(1000L);
+        lenient().when(keycloakConfig.getHealthCheckEndpoint()).thenReturn(KEYCLOAK_HEALTH_URL);
     }
 
     @Test
     void shouldReturnTrueWhenOpenMRSSystemIsAvailable() {
-        when(restTemplate.getForEntity("http://openmrs/health/started", String.class))
+        when(restTemplate.getForEntity(OPENMRS_HEALTH_URL, String.class))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         boolean result = systemAvailabilityChecker.isOpenMRSAvailable();
@@ -62,7 +67,7 @@ class SystemAvailabilityCheckerTest {
 
     @Test
     void shouldReturnFalseWhenOpenMRSIsNotAvailable() {
-        when(restTemplate.getForEntity("http://openmrs/health/started", String.class))
+        when(restTemplate.getForEntity(OPENMRS_HEALTH_URL, String.class))
                 .thenReturn(new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE));
 
         boolean result = systemAvailabilityChecker.isOpenMRSAvailable();
@@ -72,7 +77,7 @@ class SystemAvailabilityCheckerTest {
 
     @Test
     void shouldWaitForOpenMRSAvailability() {
-        when(restTemplate.getForEntity("http://openmrs/health/started", String.class))
+        when(restTemplate.getForEntity(OPENMRS_HEALTH_URL, String.class))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         boolean result = systemAvailabilityChecker.waitForOpenMRSAvailability();
@@ -82,7 +87,7 @@ class SystemAvailabilityCheckerTest {
 
     @Test
     void shouldReturnFalseWhenOpenMRSMaxRetriesExceeded() {
-        when(restTemplate.getForEntity("http://openmrs/health/started", String.class))
+        when(restTemplate.getForEntity(OPENMRS_HEALTH_URL, String.class))
                 .thenThrow(new RuntimeException("Connection failed"));
 
         boolean result = systemAvailabilityChecker.waitForOpenMRSAvailability();
@@ -92,7 +97,7 @@ class SystemAvailabilityCheckerTest {
 
     @Test
     void shouldReturnTrueWhenKeycloakSystemIsAvailable() {
-        when(restTemplate.getForEntity("http://keycloak/health/ready", String.class))
+        when(restTemplate.getForEntity(KEYCLOAK_HEALTH_URL, String.class))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         boolean result = systemAvailabilityChecker.isKeycloakAvailable();
@@ -112,7 +117,7 @@ class SystemAvailabilityCheckerTest {
 
     @Test
     void shouldWaitForKeycloakAvailability() {
-        when(restTemplate.getForEntity("http://keycloak/health/ready", String.class))
+        when(restTemplate.getForEntity(KEYCLOAK_HEALTH_URL, String.class))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         boolean result = systemAvailabilityChecker.waitForKeycloakAvailability();
